@@ -3,7 +3,7 @@
 * [介绍](introduction/index.md)
     * [资料收集整理](introduction/information.md)
 * [安装](installation/index.md)
-	* [Linux单机部署](installation/linux_simgle.md)
+	* [Linux单机部署](installation/linux_single.md)
 * [官方文档(翻译)](documentation/index.md)
     * [使用etcd开发](documentation/dev-guide/index.md)
         * [搭建本地集群](documentation/dev-guide/local_cluster.md)
@@ -45,3 +45,5 @@
 		* [LeaseRevoke方法](api/lease/leaseRevoke.md)
 		* [LeaseKeepAlive方法](api/lease/leaseKeepAlive.md)
 * [全文标签总览](tags.md)
+
+
