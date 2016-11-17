@@ -10,6 +10,7 @@
         * [和etcd交互](documentation/dev-guide/interacting_v3.md)
         * [API 参考文档](documentation/dev-guide/api_reference_v3.md)
         * [gRPC 网关](documentation/dev-guide/api_grpc_gateway.md)
+        * [gRPC 服务发现](documentation/dev-guide/grpc_discovery.md)
         * [内嵌的etcd](documentation/dev-guide/embed_etcd.md)
         * [试验性的API和特性](documentation/dev-guide/experimental_apis.md)
     * [操作etcd集群](documentation/op-guide/index.md)
