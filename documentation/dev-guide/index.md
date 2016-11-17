@@ -9,7 +9,7 @@
 - [API 参考文档](api_reference_v3.md)
 - [gRPC 网关](api_grpc_gateway.md)
 - [gRPC 服务发现](grpc_discovery.md)
-- [内嵌的etcd](embed_etcd.md)
+- [内嵌etcd](embed_etcd.md)
 - [试验性的API和特性](experimental_apis.md)
 
 ## 额外说明
