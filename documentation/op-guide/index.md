@@ -6,8 +6,8 @@
 - [搭建etcd网关](gateway.md)
 - [在容器内运行etcd集群](container.md)
 - [配置](configuration.md)
-- [加密(TODO)](security.md)
-- Monitoring
+- [安全](security.md)
+- [监控](monitor.md)
 - [维护](maintenance.md)
 - [理解失败](failures.md)
 - [灾难恢复](recovery.md)
@@ -21,4 +21,6 @@
 
 2. 内容来自 github 官网，地址： https://github.com/coreos/etcd/tree/master/Documentation/op-guide
 
-3. 这些文档打包在 etcd3 的发行包中(Documentent / op-guide 目录)，平时使用时可以随时阅读。
+3. 这些文档打包在 etcd3 的发行包中(Documentent/op-guide 目录)，平时使用时可以随时阅读。
+
+
