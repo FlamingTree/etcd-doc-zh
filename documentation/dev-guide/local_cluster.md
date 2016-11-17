@@ -46,7 +46,7 @@ $ goreman -f Procfile start
 > 注1： 必须先安装 go，请见章节 [Go语言安装](https://skyao.gitbooks.io/leaning-go/content/installation/)
 > 注2： 这里所说的 Procfile 文件是来自 [etcd 的 gitub 项目的根目录下的Procfile文件](https://github.com/coreos/etcd/blob/master/Procfile)，但是需要修改一下，将里面的 `bin/etcd` 修改为 `etcd`
 
-启动的成员各自在 `localhost:12379`, `localhost:22379`, 和 `localhost:32379` 上监听客户端请求。
+启动的成员各自在 `localhost:2379`, `localhost:22379`, 和 `localhost:32379` 上监听客户端请求。
 
 > 注： 英文原文中是 `localhost:12379` 用的是 12379 端口，但是实际上述 Procfile 文件中启动的是 2379 端口，如果连接时发现无法访问，请自行修改。下面的 12379 也是如此，请自行修改为 2379.
 
@@ -56,7 +56,7 @@ $ goreman -f Procfile start
 # 使用 API 版本 3
 $ export ETCDCTL_API=3
 
-$ etcdctl --write-out=table --endpoints=localhost:12379 member list
+$ etcdctl --write-out=table --endpoints=localhost:2379 member list
 +------------------+---------+--------+------------------------+------------------------+
 |        ID        | STATUS  |  NAME  |       PEER ADDRS       |      CLIENT ADDRS      |
 +------------------+---------+--------+------------------------+------------------------+
@@ -65,7 +65,7 @@ $ etcdctl --write-out=table --endpoints=localhost:12379 member list
 | fd422379fda50e48 | started | infra3 | http://127.0.0.1:32380 | http://127.0.0.1:32379 |
 +------------------+---------+--------+------------------------+------------------------+
 
-$ etcdctl --endpoints=localhost:12379 put foo bar
+$ etcdctl --endpoints=localhost:2379 put foo bar
 OK
 ```
 
@@ -74,14 +74,11 @@ OK
 ```bash
 # 杀掉 etcd2
 $ goreman run stop etcd2
-# 注：实测这个命令无法停止etcd，最后还是用ps命令找出pid，然后kill
-# ps -ef | grep etcd | grep 127.0.0.1:22379
-# kill ****
 
-$ etcdctl --endpoints=localhost:12379 put key hello
+$ etcdctl --endpoints=localhost:2379 put key hello
 OK
 
-$ etcdctl --endpoints=localhost:12379 get key
+$ etcdctl --endpoints=localhost:2379 get key
 hello
 
 # 试图从被杀掉的成员获取key
@@ -90,7 +87,6 @@ $ etcdctl --endpoints=localhost:22379 get key
 Error:  grpc: timed out trying to connect
 
 # 重启被杀掉的成员
-# 注：实测这个restart命令可用
 $ goreman run restart etcd2
 
 # 从重启的成员获取key
