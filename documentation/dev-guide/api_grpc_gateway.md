@@ -12,17 +12,17 @@ etcd v3 使用 [gRPC](http://www.grpc.io/) 作为它的消息协议。etcd 项�
 网关接受 etcd 的 [protocol buffer](api_reference_v3.md) 的 [JSON mapping](https://developers.google.com/protocol-buffers/docs/proto3#json) 。注意  `key` 和 `value` 字段被定义为 byte 数组，因此必须在 JSON 中以 base64 编码.
 
 ```bash
-< < COMMENT
+<<COMMENT
 https://www.base64encode.org/
 foo is 'Zm9v' in Base64
 bar is 'YmFy'
 COMMENT
 
 curl -L http://localhost:2379/v3alpha/kv/put \
-	-X POST -d '{"key": "Zm9v", "value": "YmFy"}'
+    -X POST -d '{"key": "Zm9v", "value": "YmFy"}'
 
 curl -L http://localhost:2379/v3alpha/kv/range \
-	-X POST -d '{"key": "Zm9v"}'
+    -X POST -d '{"key": "Zm9v"}'
 ```
 
 
