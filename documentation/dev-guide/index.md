@@ -8,6 +8,7 @@
 - [和etcd交互](interacting_v3.md)
 - [API 参考文档](api_reference_v3.md)
 - [gRPC 网关](api_grpc_gateway.md)
+- [gRPC 服务发现](grpc_discovery.md)
 - [内嵌的etcd](embed_etcd.md)
 - [试验性的API和特性](experimental_apis.md)
 
@@ -26,3 +27,4 @@
 	Documentent 目录 下的 dev-guide 目录就是上述内容，op-guide 和 leaning 目录下是后面要介绍的内容：
 
     ![](images/dev_guide_folder.png)
+
