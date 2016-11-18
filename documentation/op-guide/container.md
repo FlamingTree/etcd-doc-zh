@@ -2,15 +2,15 @@
 
 > 注： 内容翻译自 [Run etcd clusters inside containers](https://github.com/coreos/etcd/blob/master/Documentation/op-guide/container.md)
 
-下列指南展示如何使用 [static bootstrap process](clustering.md#static) 来用rkt和docker运行 etcd 。
+下列展示如何使用 [static bootstrap process](clustering.md#静态) 的方式在rkt和docker运行中运 etcd。
 
 ## rkt
 
 ### 运行单节点 etcd
 
-下列 rkt 运行命令将在端口 2379 上暴露 etcd 客户端API，而在端口 2380上暴露伙伴API。
+下列 rkt 运行命令将在端口 2379 上暴露 etcd client API，而在端口 2380上暴露 peer API。
 
-当配置 etcd 时使用 host IP地址。
+使用主机 IP 地址配置 etcd。
 
 ```bash
 export NODE1=192.168.1.21
@@ -23,7 +23,7 @@ sudo rkt trust --prefix coreos.com/etcd
 # gpg key fingerprint is: 18AD 5014 C99E F7E3 BA5F  6CE9 50BD D3E0 FC8A 365E
 ```
 
-运行 `v3.0.6` 版本的 etcd or 或者指定其他发布版本。
+运行 `v3.0.6` 版本的 etcd 或者指定其他发布版本。
 
 ```bash
 sudo rkt run --net=default:IP=${NODE1} coreos.com/etcd:v3.0.6 -- -name=node1 -advertise-client-urls=http://${NODE1}:2379 -initial-advertise-peer-urls=http://${NODE1}:2380 -listen-client-urls=http://0.0.0.0:2379 -listen-peer-urls=http://${NODE1}:2380 -initial-cluster=node1=http://${NODE1}:2380
@@ -37,13 +37,14 @@ etcdctl --endpoints=http://192.168.1.21:2379 member list
 
 ### 运行3节点集群
 
-使用 rkt 本地搭建 3 节点的集群， 使用`-initial-cluster` 标记.
+使用 rkt 在本地搭建 3 节点的集群，设置`-initial-cluster` 标记.
 
 ```bash
 export NODE1=172.16.28.21
 export NODE2=172.16.28.22
 export NODE3=172.16.28.23
 ```
+
 
 ```bash
 # node 1
@@ -56,19 +57,19 @@ sudo rkt run --net=default:IP=${NODE2} coreos.com/etcd:v3.0.6 -- -name=node2 -ad
 sudo rkt run --net=default:IP=${NODE3} coreos.com/etcd:v3.0.6 -- -name=node3 -advertise-client-urls=http://${NODE3}:2379 -initial-advertise-peer-urls=http://${NODE3}:2380 -listen-client-urls=http://0.0.0.0:2379 -listen-peer-urls=http://${NODE3}:2380 -initial-cluster=node1=http://${NODE1}:2380,node2=http://${NODE2}:2380,node3=http://${NODE3}:2380
 ```
 
-检验集群健康并可以到达。
+检验集群健康并可以访问。
 
-```bash
-ETCDCTL_API=3 etcdctl --endpoints=http://172.16.28.21:2379,http://172.16.28.22:2379,http://172.16.28.23:2379 endpoint-health
+```
+ETCDCTL_API=3 etcdctl --endpoints=http://172.16.28.21:2379,http://172.16.28.22:2379,http://172.16.28.23:2379 endpoint health
 ```
 
 ### DNS
 
-通过被本地解析器已知的 DNS 名称指向伙伴的产品集群必须挂载 [主机的 DNS 配置](https://coreos.com/kubernetes/docs/latest/kubelet-wrapper.html#customizing-rkt-options).
+通过被本地解析器已知的 DNS 名称指向对端的产品集群必须挂载 [主机的 DNS 配置](https://coreos.com/kubernetes/docs/latest/kubelet-wrapper.html#customizing-rkt-options).
 
 ## Docker
 
-为了暴露 etcd API 到 docker host 之外的客户端， 使用容器的 host IP 地址。请见[`docker inspect`](https://docs.docker.com/engine/reference/commandline/inspect) 来获取关于如何得到IP地址的更多细节. 或者, 为 `docker run` 命令指定 `--net=host` 标记来跳过放置容器在分隔的网络栈中。
+为了暴露 etcd API 到 docker host 之外的客户端，使用容器的 host IP 地址。参看[`docker inspect`](https://docs.docker.com/engine/reference/commandline/inspect) 来详细获取如何得到IP地址。或者, 为 `docker run` 命令指定 `--net=host` 标记，就不同把容器防止在分隔的网络栈中。
 
 ```bash
 # For each machine
@@ -117,7 +118,7 @@ sudo docker run --net=host --name etcd quay.io/coreos/etcd:${ETCD_VERSION} \
 	--initial-cluster-state ${CLUSTER_STATE} --initial-cluster-token ${TOKEN}
 ```
 
-为了使用 API 版本3 来运行 `etcdctl` :
+使用 API 版本3 来运行 `etcdctl` :
 
 ```bash
 docker exec etcd /bin/sh -c "export ETCDCTL_API=3 && /usr/local/bin/etcdctl put foo bar"
