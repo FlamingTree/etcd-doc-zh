@@ -10,11 +10,11 @@
 
 这份指南将覆盖下列用于启动 etcd 集群的机制：
 
-* [Static / 静态](#static)
-* [etcd Discovery / etcd 发现](#etcd-discovery)
-* [DNS Discovery / DNS 发现](#dns-discovery)
+* [Static / 静态](#静态)
+* [etcd Discovery / etcd 发现](#etcd发现)
+* [DNS Discovery / DNS 发现](#DNS发现)
 
-启动机制的每一种都将用于启动三台机器的 etcd 集群，详情如下：
+每种启动机制都将启动三台机器搭建 etcd 集群，详情如下：
 
 |名字|地址|主机|
 |------|---------|------------------|
@@ -24,7 +24,7 @@
 
 ## 静态
 
-如果在启动前我们知道集群成员，他们的地址和集群的大小，我们可以使用通过设置 `initial-cluster` 标记来离线启动配置。每个机器将得到下列环境变量或者命令行：
+如果在启动前我们知道集群成员，他们的地址和集群的大小，我们可以使用通过设置 `initial-cluster` 标记来离线启动配置。每个机器将使用下列环境变量或者命令行：
 
 ```bash
 ETCD_INITIAL_CLUSTER="infra0=http://10.0.1.10:2380,infra1=http://10.0.1.11:2380,infra2=http://10.0.1.12:2380"
@@ -36,13 +36,13 @@ ETCD_INITIAL_CLUSTER_STATE=new
 --initial-cluster-state new
 ```
 
-注意： 在 `initial-cluster` 中指定的 URL 是 _advertised peer URLs_ ，例如，他们将匹配对应节点的 `initial-advertise-peer-urls` 的值。
+注意： 在 `initial-cluster` 中指定的 URL 是 *advertised peer URLs* ，也就是，他们将匹配对应节点的 `initial-advertise-peer-urls` 的值。
 
-如果使用同样的配置启动多个集群(或者创建并部署单个集群)用于测试目的，强烈推荐每个集群给予一个唯一的 `initial-cluster-token`。这样做之后，etcd 可以为集群生成唯一的集群 ID 和成员 ID，甚至他们有完全一样的配置。这可以将 etcd 从可能让集群孵化的跨集群交互中保护起来。
+如果使用同样的配置启动多节点集群(或者创建并部署单节点集群)用于测试目的，强烈推荐每个集群给予一个唯一的 `initial-cluster-token`。这样做之后，etcd 可以为集群生成唯一的集群 ID 和成员 ID，即使存在使用相同配置的节点。这可以将 etcd 从跨集群交互中保护起来，以防收到干扰。
 
-etcd 在 [`listen-client-urls`](configuration.md#--advertise-client-urls) 上接收客户端访问。etcd 成员将 [`advertise-client-urls`](configuration.md#--listen-client-urls) 指定的 URl 上通告给其他成员，代理和客户端。常见的错误是设置 `advertise-client-urls` 为 localhost 或者留空为默认值，如果远程客户端可以达到 etcd。
+etcd 在 [`listen-client-urls`](configuration.md#--advertise-client-urls) 上接收客户端访问。etcd 成员将 [`advertise-client-urls`](configuration.md#--listen-client-urls) 指定的 URL 通告给其他成员，代理和客户端。常见的错误是设置 `advertise-client-urls` 为 localhost 或者留空为默认值，使远程客户端无法访问。
 
-在每台机器上，使用这些标记启动 etcd：
+在每台机器上，使用这些参数启动 etcd：
 
 ```bash
 $ etcd --name infra0 --initial-advertise-peer-urls http://10.0.1.10:2380 \
@@ -76,13 +76,13 @@ $ etcd --name infra2 --initial-advertise-peer-urls http://10.0.1.12:2380 \
 
 ### TLS
 
-etcd 支持通过 TLS 协议的加密通讯。TLS 通道可以用于加密伙伴间的内部集群通讯，也可以用于加密客户端请求。这个章节提供例子来搭建使用伙伴和客户端 TLS 的集群。详细描述 etcd 的 TLS 支持的额外信息可以在 [加密指南](security.md)
+etcd 支持通过 TLS 协议的加密通讯。TLS 通道可以用于集群节点间的加密通讯，也可以用于加密客户端请求。这个章节提供例子来搭建集群节点间的和客户端的 TLS 集群。详细描述 etcd 的 TLS 支持的额外信息可以参考 [安全](security.md)
 
 #### 自签名证书
 
-使用自签名证书证书(self-signed certificates)的集群同事加密请求并认证它的连接。要启动使用自签名证书的集群，每个集群成员应该有一个唯一的通过共享的集群CA证书来签名的键对(key pair) (`member.crt`, `member.key`)，用于伙伴连接和客户端连接。证书可以通过仿照 etcd [搭建TLS](https://github.com/coreos/etcd/blob/master/hack/tls-setup) 的例子来生成。
+使用自签名证书证书(self-signed certificates)的集群对连接进行机密和认证。要启动使用自签名证书的集群，每个集群成员应该有一个唯一的通过共享的集群CA证书来签名的键对(key pair) (`member.crt`, `member.key`)，用于节点间连接和客户端连接。证书可以通过仿照 etcd [搭建TLS](https://github.com/coreos/etcd/blob/master/hack/tls-setup) 的例子来生成。
 
-在每台机器上，etcd可以使用这些标记来启动：
+在每台机器上，etcd可以使用这些参数来启动：
 
 ```bash
 $ etcd --name infra0 --initial-advertise-peer-urls http://10.0.1.10:2380 \
@@ -126,7 +126,7 @@ $ etcd --name infra2 --initial-advertise-peer-urls https://10.0.1.12:2380 \
 
 #### 自动证书
 
-如果集群需要加密通讯，但是不需要认证连接，etcd 可以配置为自动生成 key。在初始化时，每个集群基于它的通告IP(advertised IP) 地址和主机名创建它自己的 key 集合。
+如果集群需要加密通讯，但是不需要认证连接，etcd 可以配置为自动生成 key。在初始化时，每个集群基于它的通告IP(advertised IP) 地址和主机名创建它自己的 key。
 
 在每台机器上，etcd 使用这些标记启动：
 
@@ -168,7 +168,7 @@ $ etcd --name infra2 --initial-advertise-peer-urls https://10.0.1.12:2380 \
 
 #### 案例1
 
-在下面的例子中，我们没有在列举的节点列表中包含我们新的主机地址。如果这是一个新的集群，节点 _必须_ 添加到初始化集群成员的列表中。
+在下面的例子中，我们没有在列举的节点列表中包含我们新的主机地址。如果这是一个新的集群，节点 *必须* 添加到初始化集群成员的列表中。
 
 ```bash
 $ etcd --name infra1 --initial-advertise-peer-urls http://10.0.1.11:2380 \
@@ -183,7 +183,7 @@ exit 1
 
 #### 案例2
 
-在这个例子中，我们试图映射节点(infra0)在不同地址(127.0.0.1:2380)而不是它在集群列表(10.0.1.10:2380)中列举的地址。如果这个节点是监听多个地址，所有地址 _必须_ 在 "initial-cluster" 配置指令中反映出来。
+在这个例子中，我们试图映射节点(infra0)在不同地址(127.0.0.1:2380)而不是它在集群列表中列举的地址(10.0.1.10:2380)。如果节点监听多个地址，所有地址 *必须* 在 "initial-cluster" 配置指令中反映出来。
 
 ```bash
 $ etcd --name infra0 --initial-advertise-peer-urls http://127.0.0.1:2380 \
@@ -198,7 +198,7 @@ exit 1
 
 #### 案例3
 
-如果伙伴被用配置参数的不同集合配置并试图加入这个集群，etcd 将报告集群 ID 不匹配并退出。
+如果使用不同配置参数的节点试图加入集群，etcd 将报告集群 ID 不匹配并退出。
 
 ```bash
 $ etcd --name infra3 --initial-advertise-peer-urls http://10.0.1.13:2380 \
@@ -220,7 +220,7 @@ exit 1
 * etcd 发现服务
 * DNS SRV 记录
 
-### etcd 发现
+### etcd发现
 
 为了更好的理解发现服务协议的设计，建议阅读发现服务项目 [文档](https://github.com/coreos/etcd/blob/master/Documentation/dev-internal/discovery_protocol.md)。
 
@@ -347,7 +347,7 @@ $ etcd --name infra0 --initial-advertise-peer-urls http://10.0.1.10:2380 \
 etcdserver: discovery token ignored since a cluster has already been initialized. Valid log found at /var/lib/etcd
 ```
 
-### DNS 发现
+### DNS发现
 
 DNS [SRV records](http://www.ietf.org/rfc/rfc2052.txt) 可以作为发现机制使用。
 
@@ -476,3 +476,5 @@ etcd 网关是一个简单的 TCP 代码，转发网络数据到 etcd 集群。�
 当 `--proxy` 标记被设置时，etcd 运行于 [代理模式](https://github.com/coreos/etcd/blob/release-2.3/Documentation/proxy.md)。这个代理模式仅仅支持 etcd v2 API; 没有支持 v3 API 的计划。取而代之的是，对于 v3 API 支持，在 etcd 3.0 发布之后将会有一个新的有增强特性的代理。
 
 为了搭建带有v2 API的代理的 etcd 集群，请阅读 [clustering doc in etcd 2.3 release](https://github.com/coreos/etcd/blob/release-2.3/Documentation/clustering.md).
+
+
