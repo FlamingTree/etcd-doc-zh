@@ -39,30 +39,27 @@ etcd 自带对渐进的运行时重配置的支持，这容许用户在运行时
 
 现在我们心里有使用案例了，让我们展示每个案例中涉及到的操作。
 
-在任何变动前，etcd 成员的简单多数(quorum) 必须可用。
+在任何变动前，etcd 成员的大多说(quorum) 必须可用。本质上和 etcd 集群可写的要求相同。
 
-对于任何其他到 etcd 的写入，这也是根本性的同样要求。
-
-所有集群的改动一次一个的完成:
+所有集对群的改动逐次完成:
 
 * 要更新单个成员peerURLs，做一个更新操作
-* 要替代单个成员，做一个添加然后一个删除操作
-* 要将成员从3增加到5,做两次添加操作
-* 要将成员从5减少到3,做两次删除操作
+* 要替换单个成员，做一个添加然后一个删除操作
+* 要将节点数量从3增加到5，做两次添加操作
+* 要将节点数量从5减少到3，做两次删除操作
 
 所有这些案例将使用etcd自带的 `etcdctl` 命令行工具。
-
 如果不用 `etcdctl` 修改成员，可以使用 [v2 HTTP members API][member-api] 或者 [v3 gRPC members API][member-api-grpc].
 
 ### 更新成员
 
 #### 更新 advertise client URLs
 
-为了更新成员的 advertise client URLs，简单用更新后的 client URL 标记(`--advertise-client-urls`)或者环境变量来重启这个成员(`ETCD_ADVERTISE_CLIENT_URLS`)。重新后的成员将自行发布更新后的URL。错误更新的client URL 将不会影响 etcd 集群的健康。
+为了更新节点的 advertise client URLs，使用新的 client URL 标记(`--advertise-client-urls`)或者环境变量(`ETCD_ADVERTISE_CLIENT_URLS`)重启节点即可。重新后的成员将自行发布更新后的URL。错误更新的client URL 将不会影响 etcd 集群的健康。
 
 #### 更新 advertise peer URLs
 
-要更新成员的 advertise peer URLs, 首先通过成员命令更新它然后再重启成员。需要额外的行为是因为更新 peer URL 修改了集群范围配置并能影响 etcd 集群的健康。
+要更新节点的 advertise peer URLs, 首先通过 member 命令更新它然后再重启节点。需要额外的操作是因为更新 peer URL 修改了集群级别的配置并会影响 etcd 集群的健康。
 
 要更新 peer URL，首先，我们需要找到目标成员的ID。使用 `etcdctl` 列出所有成员：
 
@@ -82,29 +79,28 @@ Updated member with ID a8266ecf031671f3 in cluster
 
 ### 删除成员
 
-假设我们要删除的成员ID是 a8266ecf031671f3.
+假设我们要删除的成员ID是 a8266ecf031671f3。
+我们随后用 `remove` 命令来进行删除:
 
-我们随后用 `remove` 命令来执行删除:
-
-``` bash
+```bash
 $ etcdctl member remove a8266ecf031671f3
 Removed member a8266ecf031671f3 from cluster
 ```
 
-此时目标成员将停止自身并在日志中打印出移除信息：
+此时目标成员将自己停止并在日志中打印出移除信息：
 
-```bash
+```
 etcd: this member has been permanently removed from the cluster. Exiting.
 ```
 
-可以安全的移除 leader，当然在新 leader 被选举时集群将不活动(inactive)。这个持续时间通常是选举超时时间加投票过程。
+移除 leader是安全的，当然在新 leader 被选举时期间集群将不生效(inactive)。这个持续时间通常是选举超时时间加投票花费的时间。
 
 ### 添加新成员
 
 添加成员的过程有两个步骤：
 
 * 通过 [HTTP members API][member-api] 添加新成员到集群, [gRPC members API][member-api-grpc], 或者 `etcdctl member add` 命令.
-* 使用新的层原配置启动新成员，包括更新后的成员列表(以后成员加新成员)
+* 使用新配置启动新成员，包括更新后的成员列表(以后成员加新成员)
 
 使用 `etcdctl` 指定 [name][conf-name] 和 [advertised peer URLs][conf-adv-peer] 来添加新的成员到集群:
 
@@ -117,7 +113,7 @@ ETCD_INITIAL_CLUSTER="infra0=http://10.0.1.10:2380,infra1=http://10.0.1.11:2380,
 ETCD_INITIAL_CLUSTER_STATE=existing
 ```
 
-`etcdctl` 已经给出关于新成员的集群信息并打印出成功启动它需要的环境变量。现在用关联的标记为新的成员启动新 etcd 进程:
+`etcdctl` 已经给出关于新成员的集群信息，并打印出成功启动它所需要的环境变量。现在用相应的参数启动新的节点:
 
 ```bash
 $ export ETCD_NAME="infra3"
@@ -126,15 +122,14 @@ $ export ETCD_INITIAL_CLUSTER_STATE=existing
 $ etcd --listen-client-urls http://10.0.1.13:2379 --advertise-client-urls http://10.0.1.13:2379 --listen-peer-urls http://10.0.1.13:2380 --initial-advertise-peer-urls http://10.0.1.13:2380 --data-dir %data_dir%
 ```
 
-新成员将作为集群的一部分运行并立即开始赶上集群的其他成员。
+新成员将作为集群的一部分运行并立即开始同步数据。
 
-如果添加多个成员，最佳实践是一次配置单个成员并在添加更多新成员前验证它正确启动。
-
-如果添加新成员到一个节点的集群，在新成员启动前集群无法继续工作，因为它需要两个成员作为galosh才能在一致性上达成一致。这个行为仅仅发生在 `etcdctl member add` 影响集群和新成员成功建立连接到已有成员的时间内。
+如果添加多个成员，最佳实践是添加一个成员并验证成功后，再添加其他成员。
+如果添加新成员到单节点的集群，在新成员启动前集群无法继续工作，因为它至少需要两个成员才能达成一致性。这个行为仅仅发生在 `etcdctl member add` 通知集群后和新旧成员建立连接之前。
 
 #### 添加成员时的错误案例
 
-在下面的案例中，我们没有在列举节点的列表中包含新的host。如果这是一个新的集群，节点必须添加到初始化集群成员列表中。
+在下面的案例中，我们没有在节点列表中包含新的host。新节点必须添加到 `initial-cluster` 列表中。
 
 ```bash
 $ etcd --name infra3 \
@@ -142,9 +137,9 @@ $ etcd --name infra3 \
   --initial-cluster-state existing
 etcdserver: assign ids error: the member count is unequal
 exit 1
-```
+``````
 
-在这个案例中，我们给出一个和我们用来加入集群的(10.0.1.13:2380)不同的地址(10.0.1.14:2380)
+在这个案例中，给出的地址(10.0.1.14:2380)与加入集群指定的地址(10.0.1.13:2380)不同
 
 ```bash
 $ etcd --name infra4 \
@@ -154,9 +149,9 @@ etcdserver: assign ids error: unmatched member while checking PeerURLs
 exit 1
 ```
 
-当我们使用一个被移除成员的数据目录来启动 etcd 时，etcd将立即退出，如果它连接到任何集群中的活动成员：
+使用已被移除成员的数据目录来启动 etcd 时，当它连接到集群中的任何活动成员后，etcd将立即退出：
 
-```bash
+```sh
 $ etcd
 etcd: this member has been permanently removed from the cluster. Exiting.
 exit 1
@@ -164,11 +159,11 @@ exit 1
 
 ### 严格重配置检查模式 (`-strict-reconfig-check`)
 
-如上所述，添加新成员的最佳实践是一次配置单个成员并在添加更多新成员前验证它正确启动。这个逐步的方式非常重要，因为如果最新添加的成员没有正确配置(例如 peer URL不正确)，集群会丢失法定人数。发生法定人数丢失是因为最新加入的成员被法定人数计数，即使这个成员对其他已经存在的成员是无法访问的。同样法定人数丢失可能发生在有连接问题或者操作问题时。
+如上所述，添加新成员的最佳实践是添加一个成员并验证成功后，再添加其他成员。这个单步的方式非常重要，因为如果最新添加的成员没有正确配置(例如 peer URL 不正确)，集群会丢失法定人数（quorum）。发生法定人数丢失是因为最新加入的成员被法定人数计数，即使其他已经存在的成员无法访问它。同样法定人数丢失可能发生在有连接问题或者操作问题时。
 
-为了避免这个问题，etcd 提供选项 `-strict-reconfig-check`. 如果这个选项被传递给 etcd， etcd 拒绝重配置请求， 如果启动的成员的数量将少于被重配置的集群的法定人数。
+为了避免这个问题，etcd 提供选项 `-strict-reconfig-check`。如果这个选项被传递给 etcd，如果已启动成员的数量少于被重配置后的集群法定人数，etcd 将拒绝重配置请求。
 
-推荐开启这个选项。当然，为了保持兼容它被默认关闭。
+此选项默认打开。
 
 [add member]: #添加新成员
 [cluster-reconf]: #集群重配置操作
@@ -178,7 +173,7 @@ exit 1
 [fault tolerance table]: https://github.com/coreos/etcd/blob/master/Documentation/v2/admin_guide.md#fault-tolerance-table
 [majority failure]: #从多数节点失败中重启集群
 [member-api]: https://github.com/coreos/etcd/blob/master/Documentation/v2/members_api.md
-[member-api-grpc]: ../dev-guide/api_reference_v3.md#service-cluster-etcdserveretcdserverpbrpcproto
+[member-api-grpc]: https://github.com/coreos/etcd/blob/master/Documentation/dev-guide/api_reference_v3.md#service-cluster-etcdserveretcdserverpbrpcproto
 [member migration]: https://github.com/coreos/etcd/blob/master/Documentation/v2/admin_guide.md#member-migration
 [remove member]: #删除成员
 [runtime-reconf]: runtime-reconf-design.md
