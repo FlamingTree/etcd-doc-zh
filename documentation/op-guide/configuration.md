@@ -165,7 +165,7 @@ etcd可以通过命令行标记和环境变量来配置。命令行上设置的�
 
 ## Proxy flags
 
-以`--proxy` 为前缀的标记配置 etcd 以 [代理模式](https://github.com/coreos/etcd/blob/master/Documentation/v2/proxy.md) 运行。"proxy" 仅支持 v2 API.
+以`--proxy` 为前缀的标记配置 etcd 以 [代理模式](https://github.com/coreos/etcd/blob/master/Documentation/v2/proxy.md) 运行。**"proxy" 仅支持 v2 API**。
 
 ### --proxy
 
@@ -176,7 +176,7 @@ etcd可以通过命令行标记和环境变量来配置。命令行上设置的�
 
 ### --proxy-failure-wait
 
-在被重新考虑之前，终端将被视为失败状态的时间(单位 毫秒)，用于被代理的请求。
+节点再被重新视为有效前，终端将被视为失败状态的时间(单位 毫秒)。
 
 + 默认: 5000
 + 环境变量: ETCD_PROXY_FAILURE_WAIT
@@ -190,23 +190,23 @@ etcd可以通过命令行标记和环境变量来配置。命令行上设置的�
 
 ### --proxy-dial-timeout
 
-请求的拨号(dial)超时时间(单位 毫秒)，或者 0 禁用超时。
+建立连接(dial)的超时时间(单位 毫秒)，0 表示禁用超时。
 
 + 默认: 1000
 + 环境变量 ETCD_PROXY_DIAL_TIMEOUT
 
 ### --proxy-write-timeout
 
-写操作的超时时间(单位 毫秒)，或者 0 禁用超时。
+写操作的超时时间(单位 毫秒)，0 表示禁用超时。
 
 + 默认: 5000
 + 环境变量: ETCD_PROXY_WRITE_TIMEOUT
 
 ### --proxy-read-timeout
 
-读操作的超时时间(单位 毫秒)，或者 0 禁用超时。
+读操作的超时时间(单位 毫秒)，0 表示禁用超时。
 
-不要修改这个值，如果在使用 watch，因为 watch 将使用 long polling 请求。
+如果在使用 watch，请不要修改这个值，因为 watch 使用 long polling 进行请求。
 
 + 默认: 0
 + 环境变量: ETCD_PROXY_READ_TIMEOUT
@@ -217,7 +217,7 @@ etcd可以通过命令行标记和环境变量来配置。命令行上设置的�
 
 ### --ca-file [弃用]
 
-客户端服务器 TLS 证书文件的路径。`--ca-file ca.crt` 可以被 `--trusted-ca-file ca.crt --client-cert-auth` 替代，而 etcd 同样工作。
+客户端服务器 TLS CA文件的路径。`--ca-file ca.crt` 可以被 `--trusted-ca-file ca.crt --client-cert-auth` 替代。
 
 + 默认: none
 + 环境变量: ETCD_CA_FILE
@@ -245,28 +245,28 @@ etcd可以通过命令行标记和环境变量来配置。命令行上设置的�
 
 ### --trusted-ca-file
 
-客户端服务器 TLS 信任证书文件的路径。
+客户端服务器 TLS 信任的 CA 文件路径。
 
 + 默认: none
 + 环境变量: ETCD_TRUSTED_CA_FILE
 
 ### --auto-tls
 
-使用生成证书的客户端 TLS。
+客户端 TLS 使用生成的证书。
 
 + 默认: false
 + 环境变量: ETCD_AUTO_TLS
 
 ### --peer-ca-file [弃用]
 
-peer server TLS 证书文件的路径. `--peer-ca-file ca.crt` 可以被 `--peer-trusted-ca-file ca.crt --peer-client-cert-auth` 替代，而 etcd 同样工作.
+peer server TLS 证书文件的路径。 `--peer-ca-file ca.crt` 可以被 `--peer-trusted-ca-file ca.crt --peer-client-cert-auth` 替代。
 
 + 默认: none
 + 环境变量: ETCD_PEER_CA_FILE
 
 ### --peer-cert-file
 
-peer server TLS 证书文件的路径.
+peer server TLS 证书文件的路径。
 
 + 默认: none
 + 环境变量: ETCD_PEER_CERT_FILE
@@ -294,7 +294,7 @@ peer server TLS 信任证书文件路径.
 
 ### --peer-auto-tls
 
-使用生成证书的peer TLS。
+peer TLS使用生成的证书。
 
 + 默认: false
 + 环境变量: ETCD_PEER_AUTO_TLS
@@ -310,22 +310,20 @@ peer server TLS 信任证书文件路径.
 
 ### --log-package-levels
 
-设置个人 etcd 子包为指定日志级别。例如 `etcdserver=WARNING,security=DEBUG`
+设置特定的 etcd 子包的日志级别。例如 `etcdserver=WARNING,security=DEBUG`
 
 + 默认: none (所有包为 INFO)
 + 环境变量: ETCD_LOG_PACKAGE_LEVELS
 
 ## 不安全的标记
 
-请谨慎使用不安全标记，因为它将打破一致性协议提供的保证。
-
-例如，它可能惊慌，如果集群中的其他成员还活着。
-
-当使用这些标记时，遵循操作指南。
+请谨慎使用不安全标记，因为可能破坏数据的一致性。
+例如，它可能panic，如果集群中的其他成员还活着。
+当使用这些标记时，请谨遵操作指南。
 
 ### --force-new-cluster
 
-强制创建新的单一成员的集群。它提交配置修改来强制移除集群中的所有现有成员然后添加自身。当 [restore a backup](https://github.com/coreos/etcd/blob/master/Documentation/v2/admin_guide.md#restoring-a-backup) 时需要设置。
+强制创建新的单一成员的集群。它提交配置修改来强制移除集群中的所有现有成员然后添加自身。此时需要设置 [restore a backup](https://github.com/coreos/etcd/blob/master/Documentation/v2/admin_guide.md#restoring-a-backup)。
 
 + 默认: false
 + 环境变量: ETCD_FORCE_NEW_CLUSTER
@@ -344,11 +342,11 @@ peer server TLS 信任证书文件路径.
 
 + 默认: none
 
-## 分析标记
+## Profiling标记
 
 ### --enable-pprof
 
-通过HTTP服务器开启运行时分析数据。地址是 client URL + "/debug/pprof/"
+通过HTTP服务器开启profiling。地址是 client URL + "/debug/pprof/"
 
 + 默认: false
 
