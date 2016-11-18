@@ -4,37 +4,36 @@
 
 etcd 自带对渐进的运行时重配置的支持，这容许用户在运行时更新集群成员。
 
-重配置请求仅能在集群成员的大多数正常工作时可以处理。**强烈推荐** 在产品中集群大小总是大于2.从一个两成员集群中移除一个成员是不安全的。在移除过程中如果有失败，集群可能无法前进而需要[从重大失败中重启][majority failure].
+重配置仅能在集群成员的大多数正常工作时才可以进行。**强烈推荐** 在生产环境中集群大小总是大于2。从两节点集群中移除一个节点是不安全的。在移除过程中如果有失败，集群可能无法正常运行而需要[从多说节点失败中重启][majority failure].
 
 为了更好的理解运行时重配置后面的设计，建议阅读 [运行时重配置文档][runtime-reconf].
 
 ## 重配置使用案例
 
-让我们过一下一些重配置集群的常见理由。他们中的大多数仅仅涉及添加或者移除成员的组合，这些在后面的 [集群重配置操作][cluster-reconf] 下解释。
+让我们过一下一些重配置集群的常见理由。大多数仅仅涉及添加或者移除成员，这些将在后面的 [集群重配置操作][cluster-reconf] 中解释。
 
-### 循环或升级多台机器
+### 升级多台机器
 
-如果多个集群成员因为计划的维护(硬件升级，网络停工)而需要移动，推荐一次一个的修改多个成员。
+如果多个集群成员因为计划的维护(硬件升级，网络停工)而需要移动，推荐逐个更改成员。
 
-移除 leader 是安全的，但是在选举过程发生的期间有短暂的停机时间。如果集群保存超过50MB，推荐 [迁移成员的数据目录][member migration].
+移除 leader 是安全的，但是在选举过程发生的期间有短暂的停机时间。如果集群保存超过50MB，推荐 [迁移成员的数据目录][member migration]。
 
 ### 修改集群大小
 
 增加集群大小可以改善 [失败容忍度][fault tolerance table] 并提供更好的读取性能。因为客户端可以从任意成员读取，增加成员的数量可以提高整体的读取吞吐量。
 
-减少集群大小可以改善集群的写入性能，作为交换是降低弹性。写入到集群是要复制到集群成员的大多数才能被认定已经提交。减少集群大小消减了大多数的数量，从而每次写入可以更快提交。
+减少集群大小可以改善集群的写入性能，但是会降低失败后的恢复能力。写入的数据需要复制到集群中的大多数节点后才被认为正确提交。集群规模的减小导致复制数量的减少，从而每次写入可以更快提交。
 
 ### 替换失败的机器
 
-如果机器因为硬件故障，数据目录损坏，或者一些其他致命情况而失败，它应该尽快被替代。已经失败但是还没有移除的机器对法定人数有不利影响并减低对额外失败的容忍性。
+如果机器因为硬件故障，数据目录损坏，或者一些其他致命情况而失败，它应该尽快被替代。已经失败但是还没有移除的机器对Raft协议法定人数有不利影响并减低对额外失败的容忍性。
 
-为了替换机器，遵循从集群中 [移除成员][remove member] 的建议, 然后再 [添加新成员][add member] 替代它的未知。 如果集群保存超过50MB, 推荐 [迁移失败成员的数据目录][member migration]， 如果它还可以访问。
+为了替换机器，遵循从集群中 [移除成员][remove member] 的建议, 然后再 [添加新成员][add member]。 如果集群数据量超过50MB, 推荐 [迁移失败成员的数据目录][member migration]，如果它还可以访问。
 
-### 从多数失败中重启集群
+### 从多数节点失败中重启集群
 
-如果集群的多数已经丢失或者所有的节点已经修改了IP地址，则需要手工动作来安全恢复。
-
-恢复过程中的基本步骤包括 [使用旧有数据创建新的集群][disaster recovery], 强制单个成员成，并最终使用运行时配置来一次一个 [添加新的成员][add member] 到这个新的集群.
+如果集群的多数已经丢失或者所有的节点已经修改了IP地址，则需要手工安全恢复。
+恢复过程中的基本步骤包括 [使用旧有数据创建新的集群][disaster recovery], 强制此几点成为 leader，并最终使用运行时配置来逐个 [添加新的成员][add member] 到这个新的集群。
 
 ## 集群重配置操作
 
@@ -171,15 +170,16 @@ exit 1
 
 推荐开启这个选项。当然，为了保持兼容它被默认关闭。
 
-[add member]: #add-a-new-member
-[cluster-reconf]: #cluster-reconfiguration-operations
+[add member]: #添加新成员
+[cluster-reconf]: #集群重配置操作
 [conf-adv-peer]: configuration.md#-initial-advertise-peer-urls
 [conf-name]: configuration.md#-name
 [disaster recovery]: recovery.md
 [fault tolerance table]: https://github.com/coreos/etcd/blob/master/Documentation/v2/admin_guide.md#fault-tolerance-table
-[majority failure]: #restart-cluster-from-majority-failure
+[majority failure]: #从多数节点失败中重启集群
 [member-api]: https://github.com/coreos/etcd/blob/master/Documentation/v2/members_api.md
 [member-api-grpc]: ../dev-guide/api_reference_v3.md#service-cluster-etcdserveretcdserverpbrpcproto
 [member migration]: https://github.com/coreos/etcd/blob/master/Documentation/v2/admin_guide.md#member-migration
-[remove member]: #remove-a-member
+[remove member]: #删除成员
 [runtime-reconf]: runtime-reconf-design.md
+
