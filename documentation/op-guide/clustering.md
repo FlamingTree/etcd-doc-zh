@@ -213,39 +213,38 @@ exit 1
 
 ## 发现
 
-在一些案例中，集群伙伴的 IP 可能无法提前知道。当使用云提供商或者网络使用 DHCP 时比较常见。在这些情况下，相比指定静态配置，使用使用已经存在的 etcd 集群来启动一个新的。我们称这个过程为"发现"。
+在某些情况下，集群节点的 IP 可能无法提前知道。当使用云提供商或者网络使用 DHCP 时比较常见。在这些情况下，相比指定静态配置，使用已经存在的 etcd 集群来启动一个新的。我们称这个过程为"发现"。
 
 有两个方法可以用来做发现：
 
 * etcd 发现服务
 * DNS SRV 记录
 
-### etcd发现
+### etcd discovery
 
 为了更好的理解发现服务协议的设计，建议阅读发现服务项目 [文档](https://github.com/coreos/etcd/blob/master/Documentation/dev-internal/discovery_protocol.md)。
 
-#### 发现 URL 的存活时间
+#### discovery URL 的存活时间
 
-发现 URL 标识唯一的 etcd 集群。对于新的集群，总是创建发现 URL 而不是重用发现 URL。
+discovery URL 标识唯一的 etcd 集群。对于新的集群，总是创建discovery URL 而不是重用旧的 URL。
 
-此外，发现URL应该仅仅用于集群的初始化启动。在集群已经运行之后修改集群成员，阅读 [运行时重配置](runtime-configuration.md) 指南。
+此外，discovery URL 应该仅仅用于集群的初始化启动。在集群已经运行之后修改集群成员，阅读 [运行时重配置](runtime-configuration.md) 指南。
 
 #### 定制 etcd 发现服务
 
-发现使用已有集群来启动自身。如果使用私有的 etcd 集群，可以创建像这样的 URL：
+发现使用已有集群来启动。如果使用私有的 etcd 集群，可以创建像这样的 URL：
 
-
-```bash
+```
 $ curl -X PUT https://myetcd.local/v2/keys/discovery/6c007a14875d53d9bf0ef5a6fc0257c817f0fb83/_config/size -d value=3
 ```
 
-通过设置 URL 的 size，创建了带有期待集群大小为3的发现 URL。
+通过设置 URL 的 size，创建了集群大小为3的 discovery URL。
 
-用于这个场景的 URL 将是  `https://myetcd.local/v2/keys/discovery/6c007a14875d53d9bf0ef5a6fc0257c817f0fb83` 而 etcd 成员将使用 `https://myetcd.local/v2/keys/discovery/6c007a14875d53d9bf0ef5a6fc0257c817f0fb83` 目录来注册，当他们启动时。
+用于这个场景的 URL 将是  `https://myetcd.local/v2/keys/discovery/6c007a14875d53d9bf0ef5a6fc0257c817f0fb83` 而启动时 etcd 节点将使用 `https://myetcd.local/v2/keys/discovery/6c007a14875d53d9bf0ef5a6fc0257c817f0fb83` 目录来注册。
 
-** 每个成员必须有指定不同的名字标记。 `Hostname` 或者 `machine-id` 是个好选择。. 否则发现会因为重复名字而失败**
+**每个成员必须有指定不同的名字标记(--name)。`Hostname` 或者 `machine-id` 是个好选择。否则会因为重复名字而失败**
 
-现在我们用这些用于每个成员的相关标记启动 etcd ：
+现在对集群节点设置不同的名字来启动 etcd ：
 
 ```bash
 $ etcd --name infra0 --initial-advertise-peer-urls http://10.0.1.10:2380 \
@@ -273,14 +272,14 @@ $ etcd --name infra2 --initial-advertise-peer-urls http://10.0.1.12:2380 \
 
 #### 公共 etcd 发现服务
 
-如果没有现成的集群可用，可以使用托管在 `discovery.etcd.io` 的公共发现服务。为了使用"new" endpoint来创建私有发现URL，使用命令：
+如果没有现成的集群可用，可以使用托管在 `discovery.etcd.io` 的公共发现服务。使用"new" API创建 discovery URL：
 
 ```bash
 $ curl https://discovery.etcd.io/new?size=3
 https://discovery.etcd.io/3e86b59982e49066c5d813af1c2e2579cbf573de
 ```
 
-这将创建带有初始化预期大小为3个成员的集群。如果没有指定大小，将使用默认值3。
+这将创建集群节点初始大小为3的 discovery URL。如果没有指定大小，将使用默认值3。
 
 ```bash
 ETCD_DISCOVERY=https://discovery.etcd.io/3e86b59982e49066c5d813af1c2e2579cbf573de
@@ -290,9 +289,9 @@ ETCD_DISCOVERY=https://discovery.etcd.io/3e86b59982e49066c5d813af1c2e2579cbf573d
 --discovery https://discovery.etcd.io/3e86b59982e49066c5d813af1c2e2579cbf573de
 ```
 
-** 每个成员必须有指定不同的名字标记。 `Hostname` 或者 `machine-id` 是个好选择。. 否则发现会因为重复名字而失败**
+**每个成员必须有指定不同的名字标记。`Hostname` 或者 `machine-id` 是个好选择。否则发现会因为重复名字而失败**
 
-现在我们用这些用于每个成员的相关标记启动 etcd ：
+现在对集群节点设置不同的名字来启动 etcd ：
 
 ```bash
 $ etcd --name infra0 --initial-advertise-peer-urls http://10.0.1.10:2380 \
@@ -316,9 +315,9 @@ $ etcd --name infra2 --initial-advertise-peer-urls http://10.0.1.12:2380 \
   --discovery https://discovery.etcd.io/3e86b59982e49066c5d813af1c2e2579cbf573de
 ```
 
-这将导致每个成员使用定制的etcd发现服务注册自身并开始集群，一旦所有的机器都已经注册。
+这导致节点将自身注册到发现服务，当所有节点注册完成后，集群启动完成。
 
-使用环境变量 `ETCD_DISCOVERY_PROXY` 来让 etcd 使用 HTTP 代理来连接到发现服务。
+使用环境变量 `ETCD_DISCOVERY_PROXY` 使 etcd 通过 HTTP 代理来连接到发现服务。
 
 #### 错误和警告案例
 
@@ -336,7 +335,7 @@ exit 1
 
 ##### 警告
 
-这是一个无害的警告，表明发现 URL 将在这台机器上被忽略。
+这是一个无害的警告，表明 discovery URL 将在这台机器上被忽略。
 
 ```bash
 $ etcd --name infra0 --initial-advertise-peer-urls http://10.0.1.10:2380 \
@@ -350,24 +349,25 @@ etcdserver: discovery token ignored since a cluster has already been initialized
 ### DNS发现
 
 DNS [SRV records](http://www.ietf.org/rfc/rfc2052.txt) 可以作为发现机制使用。
+> 参考：[Wikipedia](https://en.wikipedia.org/wiki/SRV_record)
 
-`-discovery-srv` 标记可以用于设置 DNS domain name ，在这里可以找到发现 SRV 记录。
+`-discovery-srv` 标记可以用于设置 DNS 域名，找到相应的 discovery SRV 记录。
 
-下列 DNS SRV 记录将以列出的顺序查找：
+按照以下顺序查找 DNS SRV 记录：
 
 * _etcd-server-ssl._tcp.example.com
 * _etcd-server._tcp.example.com
 
-如果 `_etcd-server-ssl._tcp.example.com` 被发现则 etcd 将在 TLS 上启动尝试启动进程。
+如果 `_etcd-server-ssl._tcp.example.com` 被发现则 etcd 将尝试用 TLS 方式启动。
 
-为了帮助客户端发现 etcd 集群，下列 DNS SRV 记录将以列出的顺序查找：
+为了帮助客户端发现 etcd 集群，按照以下顺序查找 DNS SRV 记录供客户端使用：
 
 * _etcd-client._tcp.example.com
 * _etcd-client-ssl._tcp.example.com
 
-如果发现 `_etcd-client-ssl._tcp.example.com` , 客户端将在 SSL/TLS 上尝试和etcd集群通讯。
+如果发现 `_etcd-client-ssl._tcp.example.com` , 客户端将尝试使用 SSL/TLS 和etcd集群通讯。
 
-如果 etcd 不带定义的证书 authority 使用 TLS，发现域名(如, example.com) 必须匹配 SRV record domain (例如, infra1.example.com). 这是为了减轻仿制 SRV 记录来指向不同域名的损害; 域名可能有 PKI 之下的有效证书，但是被未知的第三方控制。
+如果 etcd 以非自定义 CA 方式使用 TLS，discovery domain(如, example.com) 必须匹配 SRV record domain (如, infra1.example.com)。这是为了防止伪造 SRV 记录来指向不同域名; 域名可能有 PKI 之下的有效证书，但是被未知的第三方控制。
 
 #### 创建 DNS SRV 记录
 
@@ -396,10 +396,9 @@ infra2.example.com.  300  IN  A  10.0.1.12
 
 etcd 集群成员可以监听域名或者IP地址，启动进程将解析 DNS A 记录。
 
+在 `--initial-advertise-peer-urls` 中解析出来的地址 *必须匹配* 解析出来的 SRV 记录中的一个。 etcd 节点读取被解析的地址来检查它是否属于 SRV 记录定义的集群。
 
-在 `--initial-advertise-peer-urls` 中解析出来的地址 *必须匹配* 在 SRV 目录中解析出来的地址中的一个。 etcd 成员读取被解析的地址来发现它是否属于 SRV 记录定义的集群。
-
-```bash
+```
 $ etcd --name infra0 \
 --discovery-srv example.com \
 --initial-advertise-peer-urls http://infra0.example.com:2380 \
@@ -410,7 +409,7 @@ $ etcd --name infra0 \
 --listen-peer-urls http://infra0.example.com:2380
 ```
 
-```bash
+```
 $ etcd --name infra1 \
 --discovery-srv example.com \
 --initial-advertise-peer-urls http://infra1.example.com:2380 \
@@ -421,7 +420,7 @@ $ etcd --name infra1 \
 --listen-peer-urls http://infra1.example.com:2380
 ```
 
-```bash
+```
 $ etcd --name infra2 \
 --discovery-srv example.com \
 --initial-advertise-peer-urls http://infra2.example.com:2380 \
@@ -434,7 +433,7 @@ $ etcd --name infra2 \
 
 集群也可以使用 IP 地址而不是域名来启动：
 
-```bash
+```
 $ etcd --name infra0 \
 --discovery-srv example.com \
 --initial-advertise-peer-urls http://10.0.1.10:2380 \
@@ -445,7 +444,7 @@ $ etcd --name infra0 \
 --listen-peer-urls http://10.0.1.10:2380
 ```
 
-```bash
+```
 $ etcd --name infra1 \
 --discovery-srv example.com \
 --initial-advertise-peer-urls http://10.0.1.11:2380 \
@@ -456,7 +455,7 @@ $ etcd --name infra1 \
 --listen-peer-urls http://10.0.1.11:2380
 ```
 
-```bash
+```
 $ etcd --name infra2 \
 --discovery-srv example.com \
 --initial-advertise-peer-urls http://10.0.1.12:2380 \
@@ -469,12 +468,12 @@ $ etcd --name infra2 \
 
 ### 网关
 
-etcd 网关是一个简单的 TCP 代码，转发网络数据到 etcd 集群。请阅读 [网关指南]()来获取更多信息。
+etcd 网关是一个简单的 TCP 代理，转发网络数据到 etcd 集群。请阅读 [网关指南](gateway.md)来获取更多信息。
 
 ### 代理
 
-当 `--proxy` 标记被设置时，etcd 运行于 [代理模式](https://github.com/coreos/etcd/blob/release-2.3/Documentation/proxy.md)。这个代理模式仅仅支持 etcd v2 API; 没有支持 v3 API 的计划。取而代之的是，对于 v3 API 支持，在 etcd 3.0 发布之后将会有一个新的有增强特性的代理。
+当 `--proxy` 标记被设置时，etcd 运行于 [代理模式](https://github.com/coreos/etcd/blob/release-2.3/Documentation/proxy.md)。这个代理模式仅仅支持 etcd v2 API; 没有支持 v3 API 的计划。在 etcd 3.0 发布之后将会有一个新的特性增强的代理，取代 v2 API。
 
-为了搭建带有v2 API的代理的 etcd 集群，请阅读 [clustering doc in etcd 2.3 release](https://github.com/coreos/etcd/blob/release-2.3/Documentation/clustering.md).
+搭建带有v2 API的代理的 etcd 集群，请阅读 [clustering doc in etcd 2.3 release](https://github.com/coreos/etcd/blob/release-2.3/Documentation/clustering.md)。
 
 
