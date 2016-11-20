@@ -10,7 +10,7 @@
 
 从etcd API返回的所有应答都附带有 [response header](https://github.com/coreos/etcd/blob/master/etcdserver/etcdserverpb/rpc.proto)。这个response header包含应答的元数据。
 
-```bash
+```proto
 message ResponseHeader {
   uint64 cluster_id = 1;
   uint64 member_id = 2;
@@ -32,14 +32,13 @@ message ResponseHeader {
 
 ## 键值 API
 
-键值API用于操作etcd中的键值对存储。键值API被定义为 [gRPC服务](https://github.com/coreos/etcd/blob/master/etcdserver/etcdserverpb/rpc.proto)。在 [protobuf 格式](https://github.com/coreos/etcd/blob/master/mvcc/mvccpb/kv.proto)中键值对被定义为结构化的数据。
+键值API用于操作etcd中的键值对存储。键值API被定义为 [gRPC服务](https://github.com/coreos/etcd/blob/master/etcdserver/etcdserverpb/rpc.proto)。在 [protobuf 格式](https://github.com/coreos/etcd/blob/master/mvcc/mvccpb/kv.proto) 中键值对被定义为结构化的数据。
 
 ### 键值对
 
-键值对是键值API可以操作的最小单元。每个键值对有一些字段：
+键值对是键值API可以操作的最小单元。每个键值对有以下字段：
 
-
-```java
+```protobuf
 message KeyValue {
   bytes key = 1;
   int64 create_revision = 2;
@@ -52,7 +51,7 @@ message KeyValue {
 
 * Key - 字节数组形式的key。key不容许空。
 * Value - 字节数组形式的value
-* Version - key的版本。删除将重置版本为0而key的任何修改将增加它的版本。
+* Version - key的版本。删除将重置版本为0而对 key 的任何修改将增加它的版本。
 * Create_Revision - key最后一次创建的修订版本。
 * Mod_Revision - key最后一次修改的修订版本。
 * Lease - 附加到key的租约的ID。如果lease为0,则表示没有租约附加到key。
