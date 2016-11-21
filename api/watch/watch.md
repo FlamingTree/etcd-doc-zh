@@ -6,8 +6,7 @@ WatchService 只有一个 Watch 方法。
 
 请求的消息体是 WatchRequest：
 
-```java
-
+```grpc
 message WatchRequest {
   // request_union 要么是创建新的观察者的请求，要么是取消一个已经存在的观察者的请求
   oneof request_union {
@@ -19,7 +18,7 @@ message WatchRequest {
 
 创建新的观察者的请求 WatchCreateRequest：
 
-```java
+```grpc
 message WatchCreateRequest {
   // key 是注册要观察的key
   bytes key = 1;
@@ -27,14 +26,15 @@ message WatchCreateRequest {
   // range_end 是要观察的范围 [key, range_end) 的终点。
   // 如果 range_end 没有设置，则只有参数key被观察。
   // 如果 range_end 等同于 '\0'， 则大于等于参数key的所有key都将被观察
+  // 如果 range_end 字节长度比 key 大1，则 watch 所有前缀为 key 的键
   bytes range_end = 2;
 
   // start_revision 是可选的开始(包括)观察的修订版本。不设置 start_revision 则表示 "现在".
   int64 start_revision = 3;
 
-  // 设置 progress_notify ， 这样如果最近没有事件，etcd 服务器将定期的发送不带任何事件的 WatchResponse 给新的观察者。
+  // 设置 progress_notify，这样如果最近没有事件，etcd 服务器将定期的发送不带任何事件的 WatchResponse 给新的观察者。
   // 当客户端希望从最近已知的修订版本开始恢复断开的观察者时有用。
-  // etcd服务器将基于当前负载决定它发送通知的频率。
+  // etcd 服务器将基于当前负载决定它发送通知的频率。
   bool progress_notify = 4;
 
   enum FilterType {
@@ -56,7 +56,7 @@ message WatchCreateRequest {
 
 取消已有观察者的 WatchCancelRequest ：
 
-```java
+```grpc
 message WatchCancelRequest {
   // watch_id 是要取消的观察者的id，这样就不再有更多事件传播过来了。
   int64 watch_id = 1;
@@ -65,7 +65,7 @@ message WatchCancelRequest {
 
 应答的消息体 WatchResponse：
 
-```java
+```grpc
 message WatchResponse {
   ResponseHeader header = 1;
   // watch_id 是和应答相关的观察者的ID
@@ -91,7 +91,7 @@ message WatchResponse {
 
 mvccpb.Event 的消息体：
 
-```java
+```grpc
 message Event {
   enum EventType {
     PUT = 0;
@@ -105,6 +105,7 @@ message Event {
 
   // kv 为事件持有KeyValue。
   // PUT 事件包含当前的kv键值对
+  // PUT 时间且 kv.Version=1 表示创建 key
   // DELETE/EXPIRE 事件包含被删除的key，它的修改修订版本设置为删除的修订版本
   KeyValue kv = 2;
 
