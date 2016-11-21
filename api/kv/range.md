@@ -1,8 +1,8 @@
 # Range方法
 
-Range方法从键值存储中获取范围内的key.
+Range方法从键值存储中获取范围内的key。
 
-```java
+```grpc
 rpc Range(RangeRequest) returns (RangeResponse) {}
 ```
 
@@ -12,7 +12,7 @@ rpc Range(RangeRequest) returns (RangeResponse) {}
 
 请求的消息体是RangeRequest：
 
-```java
+```grpc
 message RangeRequest {
   enum SortOrder {
 	NONE = 0; // 默认, 不排序
@@ -31,7 +31,7 @@ message RangeRequest {
   bytes key = 1;
 
   // range_end 是请求范围的上限[key, range_end)
-  // 如果 range_end 是 '\0'，范围是大于等于 key 的所有key。
+  // 如果 range_end 是 '\0'，范围是大于等于 key 的所有键。
   // 如果 range_end 比给定的key长一个bit， 那么范围请求获取所有带有前缀(给定的key)的key
   // 如果 key 和 range_end 都是'\0'，则范围查询返回所有key
   bytes range_end = 2;
@@ -39,8 +39,8 @@ message RangeRequest {
   // 请求返回的key的数量限制
   int64 limit = 3;
 
-  // 修订版本是用于范围的键值对存储的时间点。
-  // 如果 revision 小于或等于零，范围是在最新的键值对存储上。
+  // 修订版本是用于范围键值存储的时间点。
+  // 如果 revision 小于或等于零，返回最新的键值。
   // 如果修订版本已经被压缩，返回 ErrCompacted 作为应答
   int64 revision = 4;
 
@@ -50,8 +50,8 @@ message RangeRequest {
   // 用于排序的键值字段
   SortTarget sort_target = 6;
 
-  // 设置范围请求使用串行化成员本地读(serializable member-local read)。
-  // 范围请求默认是线性化的;线性化请求相比串行化请求有更高的延迟和低吞吐量，但是反映集群当前的一致性。
+  // 设置范围请求使用串行化从本地成员中读取(serializable member-local read)。
+  // 范围请求默认是线性化的；线性化请求相比串行化请求有更高的延迟和低吞吐量，但是反映集群当前的一致性。
   // 为了更好的性能，以可能脏读为交换，串行化范围请求在本地处理，无需和集群中的其他节点达到一致。
   bool serializable = 7;
 
@@ -60,17 +60,29 @@ message RangeRequest {
 
   // 设置仅仅返回范围内key的数量
   bool count_only = 9;
+  
+  // min_mod_revision 指定返回键的最小修改版本；修改版本小于此值的键将被过滤掉。
+  int64 min_mod_revision = 10;
+
+  // max_mod_revision 指定返回键的最大修改版本；修改版本大于此值的键将被过滤掉。
+  int64 max_mod_revision = 11;
+
+  // min_create_revision 指定返回键的最小创建版本；创建版本小于此值的键将被过滤掉。
+  int64 min_create_revision = 12;
+
+  // max_create_revision 指定返回键的最大创建版本；创建版本大于此值的键将被过滤掉。
+  int64 max_create_revision = 13;
 }
 ```
 
 应答的消息体是 RangeResponse：
 
-```java
+```grpc
 message RangeResponse {
   ResponseHeader header = 1;
 
-  // kvs是匹配范围请求的键值对列表
-  // 当请求数量时是空的
+  // kvs是匹配范围请求的键值对列表。
+  // 当查询 key 的数量时，kvs 将为空
   repeated mvccpb.KeyValue kvs = 2;
 
   // more代表在被请求的范围内是否还有更多的key
@@ -83,7 +95,7 @@ message RangeResponse {
 
 mvccpb.KeyValue 的消息体：
 
-```java
+```grpc
 message KeyValue {
   // key是bytes格式的key。不容许key为空。
   bytes key = 1;
@@ -94,7 +106,7 @@ message KeyValue {
   // mod_revision 是这个key最后修改的修订版本
   int64 mod_revision = 3;
 
-  // version 是key的版本。删除会重置版本为0,而任何key的修改会增加它的版本。
+  // version 是key的版本。删除会重置版本为0，而任何key的修改会增加它的版本。
   int64 version = 4;
 
   // value是key持有的值，bytes格式。
@@ -102,7 +114,7 @@ message KeyValue {
 
   // lease是附加给key的租约id。
   // 当附加的租约过期时，key将被删除。
-  // 如果lease为0,则没有租约附加到key。
+  // 如果lease为0，则没有租约附加到key。
   int64 lease = 6;
 }
 ```
