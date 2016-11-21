@@ -1,10 +1,10 @@
 # Put 方法
 
-Put方法放置给定key到键值存储.
+Put方法将给定key放置到键值存储。
 
-Put方法增加键值存储的修订版本并在事件历史中生成一个事件.
+Put方法增加键值存储的修订版本并在事件历史中生成一个事件。
 
-```java
+```grpc
 rpc Put(PutRequest) returns (PutResponse) {}
 ```
 
@@ -12,12 +12,12 @@ rpc Put(PutRequest) returns (PutResponse) {}
 
 请求的消息体是 PutRequest：
 
-```java
+```grpc
 message PutRequest {
-  // byte数组形式的key，用来放置到键值对存储
+  // byte数组形式的key，用来放置到键值对存储。
   bytes key = 1;
 
-  // byte数组形式的value，在键值对存储中和key关联
+  // byte数组形式的value，在键值对存储中和key关联。
   bytes value = 2;
 
   // 在键值存储中和key关联的租约id。0代表没有租约。
@@ -31,7 +31,7 @@ message PutRequest {
 
 应答的消息体是 PutResponse：
 
-```java
+```grpc
 message PutResponse {
   ResponseHeader header = 1;
 
@@ -39,3 +39,4 @@ message PutResponse {
   mvccpb.KeyValue prev_kv = 2;
 }
 ```
+
