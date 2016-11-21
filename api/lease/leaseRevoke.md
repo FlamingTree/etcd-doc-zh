@@ -1,8 +1,8 @@
 # LeaseGrant 方法
 
-LeaseGrant 方法取消一个租约.
+LeaseGrant 方法取消一个租约。
 
-```java
+```grpc
 rpc LeaseRevoke(LeaseRevokeRequest) returns (LeaseRevokeResponse) {}
 ```
 
@@ -10,17 +10,17 @@ rpc LeaseRevoke(LeaseRevokeRequest) returns (LeaseRevokeResponse) {}
 
 请求的消息体是 LeaseRevokeRequest：
 
-```java
+```grpc
 message LeaseRevokeRequest {
   // ID是要取消的租约的ID。
-  // 当租约被取消时，所有关联的key将被删除
+  // 当租约被取消时，所有关联的key将被删除。
   int64 ID = 1;
 }
 ```
 
 应答的消息体是 LeaseRevokeResponse：
 
-```java
+```grpc
 message LeaseRevokeResponse {
   ResponseHeader header = 1;
 }
