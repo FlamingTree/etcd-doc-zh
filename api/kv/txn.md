@@ -6,7 +6,7 @@ Txn 方法在单个事务中处理多个请求。
 
 不容许在一个txn中多次修改同一个key。
 
-```java
+```grpc
 rpc Txn(TxnRequest) returns (TxnResponse) {}
 ```
 
@@ -16,17 +16,17 @@ rpc Txn(TxnRequest) returns (TxnResponse) {}
 
 > 来自 google paxosdb 论文:
 >
-> 我们的实现围绕强大的我们称为 MultiOp 的原生(primitive)。所有除了循环外的其他数据库操作被实现为对 MultiOp 的单一调用。MultiOp 被原子性的应用并由三个部分组成：
+> 我们的实现围绕强大的我们称为 MultiOp 的原语(primitive)。所有除了循环外的其他数据库操作被实现为对 MultiOp 的单一调用。MultiOp 被原子性的应用并由三个部分组成：
 >
 > 1. 被称为guard的测试列表。在guard中每个测试检查数据库中的单个项(entry)。它可能检查某个值的存在或者缺失，或者和给定的值比较。在guard中两个不同的测试可能应用于数据库中相同或者不同的项。guard中的所有测试被应用然后 MultiOp 返回结果。如果所有测试是true，MultiOp 执行 t 操作 (见下面的第二项), 否则它执行 f 操作 (见下面的第三项).
-> 2. 被称为 t 操作的数据库操作列表. 列表中的每个操作是插入，删除，或者查找操作，并应用到单个数据库项。列表中的两个不同操作可能应用到数据库中相同或者不同的项。如果 guard 评价为true 这些操作将被执行
-> 3. 被成为 f 操作的数据库操作列表. 类似 t 操作, 但是是在 guard 评价为 false 时执行。
+> 2. 被称为 t 操作的数据库操作列表。列表中的每个操作是插入，删除，或者查找操作，并应用到单个数据库项。列表中的两个不同操作可能应用到数据库中相同或者不同的项。如果 guard 求值为 true，这些操作将被执行。
+> 3. 被成为 f 操作的数据库操作列表。类似 t 操作, 但是在 guard 评价为 false 时执行。
 
 ## 消息体
 
 请求的消息体是 TxnRequest：
 
-```java
+```grpc
 message TxnRequest {
   // compare 是断言列表，体现为条件的联合。
   // 如果比较成功，那么成功请求将被按顺序处理，而应答将按顺序包含他们对应的应答。
@@ -43,7 +43,7 @@ message TxnRequest {
 
 应答的消息体是 TxnResponse：
 
-```java
+```grpc
 message TxnResponse {
   ResponseHeader header = 1;
 
@@ -57,13 +57,13 @@ message TxnResponse {
 
 Compare 消息体：
 
-
-```java
+```grpc
 message Compare {
   enum CompareResult {
     EQUAL = 0;
     GREATER = 1;
     LESS = 2;
+    NOT_EQUAL = 3;
   }
   enum CompareTarget {
     VERSION = 0;
@@ -78,7 +78,7 @@ message Compare {
   // target是比较要检查的键值字段
   CompareTarget target = 2;
 
-  // key是用于比较操作的主题key
+  // key是用于比较操作的 key
   bytes key = 3;
 
   oneof target_union {
@@ -91,7 +91,7 @@ message Compare {
     // mod_revision 是给定key的最后修改修订版本
     int64 mod_revision = 6;
 
-    // value 是给定key的值，以bytes的形式
+    // value 是给定key的值
     bytes value = 7;
   }
 }
@@ -99,7 +99,7 @@ message Compare {
 
 RequestOp 消息体：
 
-```java
+```grpc
 message RequestOp {
   // request 是可以被事务接受的请求类型的联合
   oneof request {
@@ -113,7 +113,7 @@ message RequestOp {
 
 ResponseOp 消息体：
 
-```java
+```grpc
 message ResponseOp {
   // response 是事务返回的应答类型的联合
   oneof response {
@@ -123,3 +123,4 @@ message ResponseOp {
   }
 }
 ```
+
